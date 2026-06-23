@@ -262,6 +262,17 @@
   .gloss dd { margin: 0; font-size: 0.97rem; line-height: 1.6; color: var(--text); }
   @media (max-width: 700px) { .gloss-list { grid-template-columns: 1fr; } }
 
+  /* ---- labelled machine diagram ---- */
+  .diagram {
+    background: var(--paper); border: 1px solid var(--grid);
+    border-radius: 16px; padding: 12px; margin: 10px 0 6px; overflow: hidden;
+  }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .diagram-note {
+    font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0.04em;
+    color: var(--muted); text-align: center; margin: 10px 4px 2px;
+  }
+
   ul.clean { margin: 0 0 18px; padding-left: 20px; }
   ul.clean li { margin-bottom: 8px; }
 
@@ -632,10 +643,119 @@
     </div>
   </section>
 
+  <!-- LABELLED DIAGRAM -->
+  <section id="parts">
+    <div class="wrap">
+      <p class="ruler"><span class="n">07</span> &nbsp;Meet the machine</p>
+      <h2>Every part, labelled</h2>
+      <p style="max-width:62ch">
+        Here's the whole machine with its parts named. The patient lies on the table in the middle,
+        and the arm swings around them. Match each label to the live picture on the dashboard — it's
+        drawn the same way.
+      </p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 900 600" role="img"
+             aria-label="Labelled side-view diagram of the X-ray C-arm showing the X-ray source, detector, C-arm, beam, isocenter, patient, patient table and stand.">
+          <style>
+            .lbl { font-family: ui-monospace, Consolas, monospace; font-weight: 700; fill: #0A6470; font-size: 19px; }
+            .sub { font-family: -apple-system, "Segoe UI", sans-serif; fill: #5A6B7B; font-size: 14px; }
+            .lead { stroke: #9bb0bd; stroke-width: 1.5; fill: none; }
+            .dot { fill: #0E8C9B; }
+          </style>
+          <defs>
+            <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M30 0 L0 0 0 30" fill="none" stroke="#e2e9ee" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="900" height="600" fill="url(#grid)"/>
+
+          <!-- stand / base -->
+          <rect x="190" y="293" width="94" height="14" rx="4" fill="#6b7b8a"/>
+          <rect x="183" y="300" width="16" height="196" fill="#55636f"/>
+          <rect x="150" y="496" width="82" height="16" rx="3" fill="#3a4654"/>
+
+          <!-- patient table + pedestal -->
+          <rect x="270" y="294" width="430" height="12" rx="5" fill="#5a6b7d"/>
+          <rect x="470" y="306" width="22" height="190" fill="#3a4654"/>
+          <rect x="440" y="496" width="82" height="16" rx="3" fill="#3a4654"/>
+
+          <!-- patient: lying on back, head to the right -->
+          <rect x="320" y="280" width="152" height="14" rx="6" fill="#cdd9e6"/>
+          <path d="M472 294 L472 270 Q474 264 484 264 L560 264 Q572 264 572 282 L572 294 Z" fill="#cdd9e6"/>
+          <circle cx="322" cy="287" r="6" fill="#cdd9e6"/>
+          <rect x="568" y="271" width="9" height="10" fill="#e8c9a8"/>
+          <circle cx="589" cy="271" r="13" fill="#e8c9a8"/>
+
+          <!-- C-arm arc -->
+          <path d="M430 150 A150 150 0 0 0 430 450" fill="none" stroke="#4b6b7e" stroke-width="16" stroke-linecap="round"/>
+          <!-- beam -->
+          <polygon points="430,168 392,442 468,442" fill="#0E8C9B" opacity="0.10"/>
+          <!-- source -->
+          <circle cx="430" cy="150" r="17" fill="#0E8C9B"/>
+          <!-- detector -->
+          <rect x="395" y="442" width="70" height="16" rx="4" fill="#cfe8ea" stroke="#0E8C9B" stroke-width="2"/>
+          <!-- isocenter cross -->
+          <path d="M421 300 H439 M430 291 V309" stroke="#E5A93B" stroke-width="2.5" fill="none"/>
+
+          <!-- ===== labels ===== -->
+          <!-- X-ray source -->
+          <line class="lead" x1="430" y1="150" x2="405" y2="86"/>
+          <circle class="dot" cx="430" cy="150" r="3.5"/>
+          <text class="lbl" x="400" y="74" text-anchor="end">X-ray source</text>
+          <text class="sub" x="400" y="92" text-anchor="end">makes the X-ray beam</text>
+
+          <!-- C-arm -->
+          <line class="lead" x1="299" y1="208" x2="165" y2="212"/>
+          <circle class="dot" cx="299" cy="208" r="3.5"/>
+          <text class="lbl" x="155" y="206" text-anchor="end">C-arm</text>
+          <text class="sub" x="155" y="224" text-anchor="end">the moving arch</text>
+
+          <!-- Stand / base -->
+          <line class="lead" x1="191" y1="430" x2="160" y2="462"/>
+          <circle class="dot" cx="191" cy="430" r="3.5"/>
+          <text class="lbl" x="150" y="470" text-anchor="end">Stand / base</text>
+          <text class="sub" x="150" y="488" text-anchor="end">holds it all up</text>
+
+          <!-- Detector -->
+          <line class="lead" x1="430" y1="458" x2="430" y2="528"/>
+          <circle class="dot" cx="430" cy="458" r="3.5"/>
+          <text class="lbl" x="430" y="548" text-anchor="middle">Detector</text>
+          <text class="sub" x="430" y="566" text-anchor="middle">the camera that catches the X-rays</text>
+
+          <!-- Isocenter -->
+          <line class="lead" x1="430" y1="300" x2="592" y2="160"/>
+          <circle class="dot" cx="430" cy="300" r="3.5"/>
+          <text class="lbl" x="600" y="150">Isocenter</text>
+          <text class="sub" x="600" y="168">the spot the arm always aims at</text>
+
+          <!-- Patient -->
+          <line class="lead" x1="602" y1="271" x2="712" y2="256"/>
+          <circle class="dot" cx="602" cy="271" r="3.5"/>
+          <text class="lbl" x="720" y="252">Patient</text>
+          <text class="sub" x="720" y="270">lies still on the table</text>
+
+          <!-- X-ray beam -->
+          <line class="lead" x1="457" y1="360" x2="632" y2="360"/>
+          <circle class="dot" cx="457" cy="360" r="3.5"/>
+          <text class="lbl" x="640" y="356">X-ray beam</text>
+          <text class="sub" x="640" y="374">passes through the patient</text>
+
+          <!-- Patient table -->
+          <line class="lead" x1="650" y1="300" x2="712" y2="424"/>
+          <circle class="dot" cx="650" cy="300" r="3.5"/>
+          <text class="lbl" x="720" y="430">Patient table</text>
+          <text class="sub" x="720" y="448">slides in 3 directions</text>
+        </svg>
+        <p class="diagram-note">side view · the arm rotates and tilts around the isocenter while the table positions the patient</p>
+      </div>
+    </div>
+  </section>
+
   <!-- WORD DECODER -->
   <section id="words">
     <div class="wrap">
-      <p class="ruler"><span class="n">07</span> &nbsp;Word decoder</p>
+      <p class="ruler"><span class="n">08</span> &nbsp;Word decoder</p>
       <h2>Tricky words, in plain language</h2>
       <p style="max-width:62ch">
         Hospitals and software both love their special words. None of them are scary once you know what

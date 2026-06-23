@@ -54,11 +54,18 @@ function txt(s) { return document.createTextNode(s); }
 
 function table(yOffset, xOffset, tiltDeg) {
   const g = el("g", { transform: `translate(${xOffset} ${yOffset}) rotate(${tiltDeg} 150 150)` });
-  // Table top
+  // Mattress / table top
   g.appendChild(el("rect", { x: 60, y: 146, width: 180, height: 8, rx: 4, fill: "#5a6b7d" }));
-  // Patient
-  g.appendChild(el("rect", { x: 95, y: 138, width: 110, height: 9, rx: 4, fill: "#9fb0c2" }));
-  g.appendChild(el("circle", { cx: 205, cy: 142, r: 7, fill: "#9fb0c2" }));
+  // --- a person lying on their back, head to the right ---
+  // legs / lower body under a gown
+  g.appendChild(el("rect", { x: 96, y: 137, width: 62, height: 9, rx: 4, fill: "#cdd9e6" }));
+  // torso with a slightly raised chest
+  g.appendChild(el("path", { d: "M152 146 L152 132 Q154 128 162 128 L184 128 Q192 128 192 138 L192 146 Z", fill: "#cdd9e6" }));
+  // feet
+  g.appendChild(el("circle", { cx: 98, cy: 141, r: 5, fill: "#cdd9e6" }));
+  // neck + head
+  g.appendChild(el("rect", { x: 190, y: 133, width: 7, height: 7, fill: "#e8c9a8" }));
+  g.appendChild(el("circle", { cx: 202, cy: 134, r: 7.5, fill: "#e8c9a8" }));
   // Pedestal
   g.appendChild(el("rect", { x: 140, y: 154, width: 20, height: 60, fill: "#3a4654" }));
   return g;
