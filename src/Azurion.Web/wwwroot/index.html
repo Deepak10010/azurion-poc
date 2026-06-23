@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Azurion Simulator — Live Console</title>
+  <style>
+    :root {
+      --bg: #0e1116; --panel: #171c24; --panel2: #1f2630; --line: #2b3441;
+      --text: #e6edf3; --muted: #8b97a7; --accent: #4ea3ff; --ok: #3fb950;
+      --warn: #d29922; --bad: #f85149; --move: #58a6ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 14px/1.5 -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    header {
+      padding: 14px 20px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: .3px; }
+    header .sub { color: var(--muted); font-size: 12px; }
+    .conn { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+    .dot.live { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    main { display: grid; grid-template-columns: minmax(420px, 1fr) 380px; gap: 16px; padding: 16px; align-items: start; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+    .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 0 0 10px; }
+    svg { width: 100%; height: auto; background: var(--panel2); border-radius: 8px; display: block; }
+    .views { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 620px) { .views { grid-template-columns: 1fr; } }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .badge { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    .badge.on-move { color: #fff; background: #1f6feb; border-color: #1f6feb; }
+    .badge.on-settled { color: #fff; background: var(--ok); border-color: var(--ok); }
+    .badge.on-estop { color: #fff; background: var(--bad); border-color: var(--bad); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+    tr.moving td { color: var(--move); }
+    .bar { height: 5px; background: var(--panel2); border-radius: 3px; position: relative; margin-top: 3px; }
+    .bar > i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); border-radius: 2px; }
+    .controls { display: grid; gap: 10px; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .row label { flex: 0 0 130px; color: var(--muted); font-size: 12px; }
+    select, input, button {
+      background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+      border-radius: 6px; padding: 6px 8px; font-size: 13px;
+    }
+    input[type=number] { width: 80px; }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+    button.go { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+    button.warn { background: #2d2410; border-color: var(--warn); color: var(--warn); }
+    button.bad { background: #3a1416; border-color: var(--bad); color: var(--bad); }
+    .quick { display: flex; gap: 6px; flex-wrap: wrap; }
+    .faults { margin-top: 12px; max-height: 140px; overflow: auto; }
+    .fault { font-size: 12px; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid var(--bad); background: #20161780; }
+    .fault .k { color: var(--bad); font-weight: 600; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Azurion Positioner — Live Console</h1>
+      <div class="sub">Simulated interventional X-ray C-arm &amp; patient table · watch your tests drive it</div>
+    </div>
+    <div class="conn"><span id="dot" class="dot"></span><span id="connText">connecting…</span></div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Geometry</h2>
+      <div class="views">
+        <div>
+          <svg id="sideView" viewBox="0 0 300 300" aria-label="Side view"></svg>
+          <div class="hint" style="text-align:center">Side view — rotation (RAO/LAO) &amp; table height</div>
+        </div>
+        <div>
+          <svg id="headView" viewBox="0 0 300 300" aria-label="Head view"></svg>
+          <div class="hint" style="text-align:center">Head view — angulation (CRAN/CAUD) &amp; lateral</div>
+        </div>
+      </div>
+      <div class="badges">
+        <span id="bMove" class="badge">Idle</span>
+        <span id="bSettled" class="badge">Settled</span>
+        <span id="bFlaky" class="badge">Flakiness: Off</span>
+        <span id="bEstop" class="badge">E-stop clear</span>
+      </div>
+
+      <div class="faults" id="faults"></div>
+    </section>
+
+    <aside style="display:grid; gap:16px;">
+      <section class="panel">
+        <h2>Axes</h2>
+        <table>
+          <thead><tr><th>Axis</th><th>Pos</th><th>Target</th><th>Range</th></tr></thead>
+          <tbody id="axisRows"></tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>Manual control</h2>
+        <div class="controls">
+          <div class="row">
+            <label>Axis</label>
+            <select id="axisSel"></select>
+          </div>
+          <div class="row">
+            <label>Move to</label>
+            <input id="moveVal" type="number" step="1" value="30" />
+            <button class="go" id="btnMove">Move</button>
+          </div>
+          <div class="row">
+            <label>Quick poses</label>
+            <div class="quick">
+              <button id="btnHome">Home</button>
+              <button id="btnLao30">LAO 30°</button>
+              <button id="btnCollide">Force collision</button>
+            </div>
+          </div>
+          <div class="row">
+            <label>Flakiness</label>
+            <select id="flakySel">
+              <option value="off">Off (clean)</option>
+              <option value="mild">Mild</option>
+              <option value="harsh">Harsh</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Safety</label>
+            <div class="quick">
+              <button class="warn" id="btnStop">Stop</button>
+              <button class="bad" id="btnEstop">E-STOP</button>
+              <button id="btnReset">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="hint">Tip: set Flakiness to <b>Harsh</b>, then run the test suite and watch which scenarios still pass.</div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

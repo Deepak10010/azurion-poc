@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Azurion.Simulator/Azurion.Simulator.csproj" />
+    <Project Path="src/Azurion.Web/Azurion.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Azurion.Tests/Azurion.Tests.csproj" />
+  </Folder>
+</Solution>

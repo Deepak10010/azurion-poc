@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Azurion Simulator — A Friendly Guide</title>
+<style>
+  :root {
+    --ground: #EDF1F5;        /* cool blue-grey drafting paper */
+    --paper:  #FFFFFF;        /* panels */
+    --text:   #112436;        /* deep ink navy */
+    --muted:  #5A6B7B;        /* soft slate for secondary text */
+    --accent: #0E8C9B;        /* fluoroscopy teal */
+    --accent-deep: #0A6470;   /* darker teal for hovers */
+    --alert:  #E5544A;        /* coral — warnings / "flaky" */
+    --grid:   #D2DDE5;        /* blueprint grid line */
+    --instrument: #0E1B27;    /* dark instrument panel (echoes the live dashboard) */
+    --instrument-text: #CFE6EA;
+
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", "Consolas", "Liberation Mono", monospace;
+    --sans: -apple-system, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+
+    --maxw: 1080px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 18px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  a { color: var(--accent-deep); }
+
+  /* ---- eyebrow + headings ---- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 2px;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 6vw, 4.3rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    margin: 0 0 18px;
+  }
+  h2 {
+    font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    font-weight: 750;
+    margin: 0 0 16px;
+  }
+  h3 {
+    font-size: 1.18rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+  p { margin: 0 0 18px; }
+  .lead { font-size: clamp(1.1rem, 2vw, 1.32rem); color: var(--text); max-width: 60ch; }
+  .muted { color: var(--muted); }
+
+  /* ---- HERO ---- */
+  header.hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(237,241,245,0) 78%, var(--ground) 100%),
+      linear-gradient(0deg, var(--grid) 1px, transparent 1px) 0 0 / 100% 32px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 100%,
+      var(--ground);
+    border-bottom: 1px solid var(--grid);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 40px;
+    align-items: center;
+    padding: 70px 0 64px;
+  }
+  .hero-copy { min-width: 0; }
+  .scene {
+    background: var(--instrument);
+    border-radius: 16px;
+    border: 1px solid #1d2c3a;
+    box-shadow: 0 24px 50px -24px rgba(14,27,39,0.55);
+    padding: 14px;
+    position: relative;
+  }
+  .scene canvas { width: 100%; height: auto; display: block; border-radius: 8px; }
+  .scene .tag {
+    position: absolute; top: 22px; left: 24px;
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    color: var(--instrument-text); opacity: 0.7; text-transform: uppercase;
+  }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .pill {
+    font-family: var(--mono); font-size: 0.78rem;
+    border: 1px solid var(--grid); background: var(--paper);
+    color: var(--muted); border-radius: 999px; padding: 6px 13px;
+  }
+
+  /* ---- section rhythm ---- */
+  section { padding: 64px 0; border-bottom: 1px solid var(--grid); }
+  section:last-of-type { border-bottom: 0; }
+
+  /* measurement-style divider label sitting on the section top */
+  .ruler {
+    display: flex; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .ruler::after {
+    content: ""; flex: 1; height: 8px;
+    background:
+      repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 16px);
+    border-bottom: 1px solid var(--grid);
+  }
+  .ruler .n { color: var(--accent-deep); }
+
+  /* ---- cards ---- */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--grid);
+    border-radius: 14px;
+    padding: 24px 22px;
+  }
+  .card .ic {
+    font-family: var(--mono); font-weight: 700; color: var(--accent-deep);
+    font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 14px;
+  }
+
+  /* ---- analogy callout ---- */
+  .analogy {
+    display: grid; grid-template-columns: 64px 1fr; gap: 20px;
+    background: var(--paper); border: 1px solid var(--grid);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px; padding: 22px 24px; margin: 22px 0;
+  }
+  .analogy .emoji { font-size: 2.4rem; line-height: 1; }
+  .analogy h3 { margin-bottom: 6px; }
+  .analogy p { margin: 0; }
+
+  .note {
+    border-left: 4px solid var(--alert);
+    background: #fdeceb;
+    border-radius: 10px;
+    padding: 16px 20px; margin: 20px 0;
+    color: #7d2520;
+  }
+  .note strong { color: var(--alert); }
+
+  /* ---- instrument / command blocks ---- */
+  .terminal {
+    background: var(--instrument);
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid #1d2c3a; margin: 14px 0 8px;
+  }
+  .terminal .bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-bottom: 1px solid #1d2c3a;
+  }
+  .terminal .bar i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .terminal .bar .t { margin-left: 8px; font-family: var(--mono); font-size: 0.74rem; color: #7e93a3; }
+  .terminal pre {
+    margin: 0; padding: 16px 18px; overflow-x: auto;
+    font-family: var(--mono); font-size: 0.92rem; line-height: 1.6;
+    color: var(--instrument-text);
+  }
+  .terminal pre .c { color: #6f8696; } /* comment / prompt */
+  .terminal pre .g { color: #6fd49a; } /* success green */
+  .terminal pre .a { color: #6fd0dd; } /* accent */
+  code.inl {
+    font-family: var(--mono); font-size: 0.86em;
+    background: #dde7ee; color: var(--accent-deep);
+    padding: 2px 7px; border-radius: 5px;
+  }
+
+  /* ---- numbered steps ---- */
+  .steps { display: grid; gap: 16px; counter-reset: step; }
+  .step {
+    display: grid; grid-template-columns: 70px 1fr; gap: 22px;
+    background: var(--paper); border: 1px solid var(--grid);
+    border-radius: 14px; padding: 22px 24px;
+  }
+  .step .num {
+    font-family: var(--mono); font-weight: 800;
+    font-size: 2rem; color: var(--accent);
+    line-height: 1; letter-spacing: -0.04em;
+  }
+  .step h3 { margin-bottom: 6px; }
+  .step p:last-child { margin-bottom: 0; }
+
+  .path-label {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent-deep);
+    background: #d9eef0; border: 1px solid #b6dfe3;
+    padding: 6px 14px; border-radius: 999px; margin: 6px 0 18px;
+  }
+
+  /* ---- "try this" experiments ---- */
+  .tries { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .try {
+    background: var(--paper); border: 1px solid var(--grid);
+    border-radius: 12px; padding: 20px 22px;
+  }
+  .try .k { font-family: var(--mono); font-size: 0.74rem; color: var(--accent-deep); letter-spacing: 0.1em; }
+  .try h3 { margin: 8px 0 6px; font-size: 1.05rem; }
+  .try p { margin: 0; font-size: 0.96rem; color: var(--muted); }
+
+  /* ---- glossary / word decoder ---- */
+  .gloss-group { margin-top: 30px; }
+  .gloss-head {
+    font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent-deep);
+    margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .gloss-head::before { content: ""; width: 18px; height: 2px; background: var(--accent); }
+  .gloss-list {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 8px;
+  }
+  .gloss {
+    background: var(--paper); border: 1px solid var(--grid);
+    border-radius: 12px; padding: 16px 18px; margin: 0;
+  }
+  .gloss dt {
+    font-family: var(--mono); font-weight: 700; color: var(--accent-deep);
+    font-size: 0.96rem; margin-bottom: 5px;
+  }
+  .gloss dt .say {
+    font-family: var(--sans); font-weight: 400; color: var(--muted);
+    font-size: 0.8rem; letter-spacing: 0;
+  }
+  .gloss dd { margin: 0; font-size: 0.97rem; line-height: 1.6; color: var(--text); }
+  @media (max-width: 700px) { .gloss-list { grid-template-columns: 1fr; } }
+
+  ul.clean { margin: 0 0 18px; padding-left: 20px; }
+  ul.clean li { margin-bottom: 8px; }
+
+  footer {
+    padding: 48px 0 70px; color: var(--muted);
+    font-size: 0.92rem;
+  }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; }
+  footer .mono { font-family: var(--mono); }
+
+  /* ---- responsive ---- */
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 30px; padding: 52px 0 48px; }
+    .cards { grid-template-columns: 1fr; }
+    .tries { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    body { font-size: 17px; }
+    .step { grid-template-columns: 1fr; gap: 6px; }
+    .analogy { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">A friendly guide</p>
+        <h1>The robot that&nbsp;helps doctors see&nbsp;inside&nbsp;you.</h1>
+        <p class="lead">
+          This project is a <strong>pretend hospital X-ray robot</strong> you can play with on a
+          computer — plus a set of <strong>robot helpers that check it works</strong>. It's a safe
+          place to learn a real job: testing machines that move.
+        </p>
+        <div class="pills">
+          <span class="pill">no real X-rays</span>
+          <span class="pill">no million-euro machine</span>
+          <span class="pill">runs on your laptop</span>
+        </div>
+      </div>
+
+      <div class="scene">
+        <span class="tag">Live schematic · side view</span>
+        <canvas id="carm" width="520" height="440"
+                role="img" aria-label="Animated diagram of a C-shaped X-ray arm gently rotating around a patient table"></canvas>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <p class="ruler"><span class="n">01</span> &nbsp;What is this, really?</p>
+      <h2>A giant camera that takes photos from the inside</h2>
+      <p style="max-width:62ch">
+        In hospitals there is a machine called the <strong>Azurion</strong>. Think of it as a huge
+        robot arm shaped like the letter <strong>C</strong>. On one end is an X-ray camera; on the
+        other end is the X-ray light. The patient lies on a table in the middle.
+      </p>
+      <p style="max-width:62ch">
+        The whole C can <strong>spin, tilt, and slide</strong>, and the table moves too. That lets
+        the doctor look at a heart or a blood vessel from any angle — without cutting the patient
+        open. Instead they slide a tiny tube through a blood vessel and watch it on screen, live.
+      </p>
+
+      <div class="analogy">
+        <div class="emoji" aria-hidden="true">🎥</div>
+        <div>
+          <h3>Picture a film crew</h3>
+          <p>
+            The C-arm is the camera on a crane. The patient is the actor. The doctor is the director
+            saying "move left, tilt down, zoom in." The machine must obey <em>exactly</em> — every
+            time — because a real person is lying right there.
+          </p>
+        </div>
+      </div>
+
+      <p style="max-width:62ch">
+        Our project doesn't use a real machine. It uses a <strong>simulator</strong>: a software copy
+        that follows the same rules — it moves at the same speed, has the same limits, and can even
+        bump into things. You can watch it move in your web browser.
+      </p>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <p class="ruler"><span class="n">02</span> &nbsp;Why do we need it?</p>
+      <h2>Because checking a moving machine is surprisingly tricky</h2>
+      <p style="max-width:62ch">
+        Before a hospital trusts the machine, someone has to <strong>test</strong> it: give it a
+        command and check it did the right thing. We want a computer to do that checking
+        automatically, thousands of times. That's called <strong>test automation</strong>.
+      </p>
+      <p style="max-width:62ch">
+        Testing a website is easy — buttons appear instantly. But a <strong>moving machine takes
+        time</strong>. And that small fact causes a big, sneaky problem.
+      </p>
+
+      <div class="analogy">
+        <div class="emoji" aria-hidden="true">🍞</div>
+        <div>
+          <h3>The toaster problem</h3>
+          <p>
+            You push the toaster lever and check for toast half a second later. No toast! Is the
+            toaster broken? <strong>No</strong> — you just didn't wait. A bad test makes this exact
+            mistake: it checks too early, then shouts "BROKEN!" when nothing is wrong. Tests that fail
+            randomly like this are called <strong>flaky</strong>, and they drive engineers crazy.
+          </p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:30px">Why pretend instead of using the real one?</h3>
+      <ul class="clean" style="max-width:62ch">
+        <li>A real machine costs <strong>millions</strong> and there aren't many to practise on.</li>
+        <li>It uses <strong>real radiation</strong> — not something to play with while learning.</li>
+        <li>It's busy with <strong>real patients</strong> all day.</li>
+        <li>A simulator can be made <strong>flaky on purpose</strong>, so you can practise beating the toaster problem safely.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- BIG IDEA -->
+  <section id="idea">
+    <div class="wrap">
+      <p class="ruler"><span class="n">03</span> &nbsp;The one big lesson</p>
+      <h2>Wait for it to finish. <em>Then</em> check.</h2>
+      <p style="max-width:62ch">
+        This is the whole secret of testing machines that move, and it's the skill this project
+        teaches you to <em>feel</em> in your hands:
+      </p>
+
+      <div class="analogy" style="border-left-color: var(--alert)">
+        <div class="emoji" aria-hidden="true">⏳</div>
+        <div>
+          <h3>The rule</h3>
+          <p>
+            <strong>Don't check while it's still moving.</strong> Wait until the machine says
+            "I've arrived and settled down," and then check that it landed <em>close enough</em> to
+            where you asked (a tiny bit of wobble is normal — just like a real motor).
+          </p>
+        </div>
+      </div>
+
+      <p style="max-width:62ch">
+        In this project there's a flakiness switch with three settings: <code class="inl">Off</code>,
+        <code class="inl">Mild</code>, and <code class="inl">Harsh</code>. Turn it to <strong>Harsh</strong>
+        and the pretend machine wobbles and overshoots like a tired robot. The good tests still pass —
+        because they wait and allow for wobble. That's the proof the lesson works.
+      </p>
+    </div>
+  </section>
+
+  <!-- WHAT'S INSIDE -->
+  <section id="inside">
+    <div class="wrap">
+      <p class="ruler"><span class="n">04</span> &nbsp;What's inside the box</p>
+      <h2>Three parts that work together</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="ic">PART 1</div>
+          <h3>The pretend machine</h3>
+          <p class="muted">
+            The software robot itself. It knows how to move each part, how fast, how far, and when it
+            would crash. This is the thing we test.
+          </p>
+        </div>
+        <div class="card">
+          <div class="ic">PART 2</div>
+          <h3>The live screen</h3>
+          <p class="muted">
+            A web page that draws the machine and updates as it moves — so you can <em>watch</em> the
+            arm swing and the table rise in real time.
+          </p>
+        </div>
+        <div class="card">
+          <div class="ic">PART 3</div>
+          <h3>The robot helpers (tests)</h3>
+          <p class="muted">
+            Little scripts written in almost-plain-English that command the machine and check it did
+            the right thing — automatically.
+          </p>
+        </div>
+      </div>
+
+      <p style="margin-top:26px; max-width:62ch">
+        The tests are written in a style called <strong>Gherkin</strong> that reads like a story.
+        Here's a real one from this project:
+      </p>
+      <div class="terminal">
+        <div class="bar">
+          <i style="background:#e5544a"></i><i style="background:#e7b94b"></i><i style="background:#6fd49a"></i>
+          <span class="t">Positioning.feature</span>
+        </div>
+<pre><span class="a">Scenario:</span> Rotate the stand to a single oblique angle
+  <span class="a">When</span> I command StandRotation to 30 degrees
+  <span class="a">And</span> I wait for the system to settle
+  <span class="a">Then</span> StandRotation is at 30 within 0.05
+  <span class="a">And</span> no fault is raised</pre>
+      </div>
+      <p class="muted" style="font-size:0.96rem">
+        See it? <em>Command → wait → then check.</em> That's the toaster rule, written down.
+      </p>
+    </div>
+  </section>
+
+  <!-- HOW TO RUN -->
+  <section id="run">
+    <div class="wrap">
+      <p class="ruler"><span class="n">05</span> &nbsp;How to run it · step by step</p>
+      <h2>Let's make it go</h2>
+
+      <p style="max-width:62ch">
+        You'll type a few commands into a <strong>terminal</strong> (a text window where you talk to
+        your computer). Don't worry — you only need to copy and paste.
+      </p>
+
+      <div class="note">
+        <strong>First, install one thing:</strong> the <strong>.NET 10 SDK</strong> from
+        <span class="mono">dotnet.microsoft.com/download</span>. To check it worked, type
+        <code class="inl">dotnet --version</code> — you should see a number starting with <strong>10</strong>.
+      </div>
+
+      <div class="path-label">Path A · just check everything works</div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <div>
+            <h3>Open the project folder in a terminal</h3>
+            <p class="muted">Open the folder <code class="inl">c:\Repos\Azurion</code> in a terminal window.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div>
+            <h3>Run the tests</h3>
+            <p class="muted">Type this and press Enter:</p>
+            <div class="terminal">
+              <div class="bar"><i style="background:#e5544a"></i><i style="background:#e7b94b"></i><i style="background:#6fd49a"></i><span class="t">terminal</span></div>
+<pre><span class="c">&gt;</span> dotnet test</pre>
+            </div>
+            <p class="muted">
+              The computer quietly builds the pretend machine in the background and runs every robot
+              helper against it. Wait about a minute (the tests really do wait for the machine to
+              move). At the end you want to see:
+            </p>
+            <div class="terminal">
+              <div class="bar"><i style="background:#e5544a"></i><i style="background:#e7b94b"></i><i style="background:#6fd49a"></i><span class="t">result</span></div>
+<pre><span class="g">Passed!</span>  - Failed: 0, Passed: 26, Skipped: 0, Total: 26</pre>
+            </div>
+            <p class="muted" style="margin-bottom:0">That's it — every check passed. 🎉</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="path-label" style="margin-top:34px">Path B · watch the machine move (the fun one)</div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <div>
+            <h3>Start the machine + screen</h3>
+            <p class="muted">In your <strong>first</strong> terminal, type:</p>
+            <div class="terminal">
+              <div class="bar"><i style="background:#e5544a"></i><i style="background:#e7b94b"></i><i style="background:#6fd49a"></i><span class="t">terminal 1</span></div>
+<pre><span class="c">&gt;</span> dotnet run --project src/Azurion.Web</pre>
+            </div>
+            <p class="muted">Leave this one running.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div>
+            <h3>Open the live screen in your browser</h3>
+            <p class="muted">Go to this address:</p>
+            <div class="terminal">
+              <div class="bar"><i style="background:#e5544a"></i><i style="background:#e7b94b"></i><i style="background:#6fd49a"></i><span class="t">browser</span></div>
+<pre><span class="a">http://localhost:5023</span></pre>
+            </div>
+            <p class="muted">You'll see the C-arm, the table, and a panel of numbers. Try the jog buttons!</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div>
+            <h3>Run the tests in a second terminal</h3>
+            <p class="muted">Open <strong>another</strong> terminal in the same folder and type:</p>
+            <div class="terminal">
+              <div class="bar"><i style="background:#e5544a"></i><i style="background:#e7b94b"></i><i style="background:#6fd49a"></i><span class="t">terminal 2</span></div>
+<pre><span class="c">&gt;</span> dotnet test</pre>
+            </div>
+            <p class="muted" style="margin-bottom:0">
+              Now look at your browser — the arm <strong>moves by itself</strong> as the tests drive it.
+              You're watching robot helpers operate the machine, live.
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div>
+            <h3>Turn on the wobble</h3>
+            <p class="muted">
+              On the screen, set <strong>Flakiness → Harsh</strong> and run <code class="inl">dotnet test</code>
+              again. Watch the arm overshoot and drift — yet the good tests still pass, because they
+              wait and allow for wobble. <strong>That's the whole lesson, in action.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEARN BY PLAYING -->
+  <section id="play">
+    <div class="wrap">
+      <p class="ruler"><span class="n">06</span> &nbsp;Learn by playing</p>
+      <h2>Little experiments to try</h2>
+      <p style="max-width:62ch">
+        The best way to learn is to poke at it and see what happens. Nothing here can break anything —
+        it's all pretend. Try these:
+      </p>
+      <div class="tries">
+        <div class="try">
+          <span class="k">EXPERIMENT 01</span>
+          <h3>Break a test on purpose</h3>
+          <p>Open a <code class="inl">.feature</code> file and change <code class="inl">within 0.05</code> to <code class="inl">within 0.001</code> under Harsh wobble. Watch it go flaky — then change it back.</p>
+        </div>
+        <div class="try">
+          <span class="k">EXPERIMENT 02</span>
+          <h3>Cause a crash</h3>
+          <p>On the screen, press <strong>"Force collision."</strong> The arm and table get too close, the machine shouts a warning, and motion stops. Safety in action.</p>
+        </div>
+        <div class="try">
+          <span class="k">EXPERIMENT 03</span>
+          <h3>Ask for the impossible</h3>
+          <p>Command an axis past its limit (way too far). The machine refuses and raises a fault instead of breaking itself.</p>
+        </div>
+        <div class="try">
+          <span class="k">EXPERIMENT 04</span>
+          <h3>Write your own helper</h3>
+          <p>Copy a scenario in <code class="inl">Positioning.feature</code>, change the angle, and run the tests. You just wrote a test!</p>
+        </div>
+      </div>
+
+      <div class="analogy" style="margin-top:28px">
+        <div class="emoji" aria-hidden="true">🧭</div>
+        <div>
+          <h3>Where to look in the code</h3>
+          <p>
+            The stories live in <code class="inl">tests/Azurion.Tests/Features</code>. The pretend
+            machine lives in <code class="inl">src/Azurion.Simulator</code>. The live screen is in
+            <code class="inl">src/Azurion.Web</code>. The full technical notes are in the project's
+            <code class="inl">README.md</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORD DECODER -->
+  <section id="words">
+    <div class="wrap">
+      <p class="ruler"><span class="n">07</span> &nbsp;Word decoder</p>
+      <h2>Tricky words, in plain language</h2>
+      <p style="max-width:62ch">
+        Hospitals and software both love their special words. None of them are scary once you know what
+        they really mean. Here's the whole list — keep it open while you play.
+      </p>
+
+      <div class="gloss-group">
+        <h3 class="gloss-head">The machine and its parts</h3>
+        <dl class="gloss-list">
+          <div class="gloss">
+            <dt>C-arm</dt>
+            <dd>The big robot arm shaped like the letter <strong>C</strong>. One tip holds the X-ray camera, the other holds the X-ray light. The patient lies in the gap between them.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Geometry</dt>
+            <dd>A fancy word for "where everything is right now" — how the arm is pointing and where the table sits. Changing the geometry just means <em>moving things</em> to look from a new angle.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Axis <span class="say">(many: axes)</span></dt>
+            <dd>One single way the machine can move — like one slider or dial. Spinning is one axis, tilting is another, the table going up is another. Each one moves on its own.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Isocenter</dt>
+            <dd>The fixed point in the very middle that the arm always aims at. However the arm spins, it keeps pointing here — where the doctor wants to look. It's the little <strong>yellow cross</strong> on the screen.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Source</dt>
+            <dd>The part that makes the X-ray beam — the "light" that shines through the patient.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Detector</dt>
+            <dd>The part that catches the X-rays after they pass through the patient and turns them into the picture — the "camera."</dd>
+          </div>
+          <div class="gloss">
+            <dt>SID <span class="say">(source-image distance)</span></dt>
+            <dd>How far apart the light and the camera are. Sliding the camera in or out changes how big and sharp the picture looks.</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="gloss-group">
+        <h3 class="gloss-head">The movements (angle names)</h3>
+        <dl class="gloss-list">
+          <div class="gloss">
+            <dt>RAO / LAO</dt>
+            <dd>How far the arm leans to one side as it spins around the patient. <strong>RAO</strong> = leans to the patient's right, <strong>LAO</strong> = to the left. (Doctors say "Right/Left Anterior Oblique.")</dd>
+          </div>
+          <div class="gloss">
+            <dt>LAO 30°</dt>
+            <dd>A command meaning <em>"spin the arm 30 degrees over to the left side."</em> It's just one particular viewing angle. (And <strong>°</strong> is the little symbol for "degrees.")</dd>
+          </div>
+          <div class="gloss">
+            <dt>CRAN / CAUD</dt>
+            <dd>How far the arm tilts toward the head or the feet. <strong>CRAN</strong> = toward the head, <strong>CAUD</strong> = toward the feet. (Short for "cranial / caudal.")</dd>
+          </div>
+          <div class="gloss">
+            <dt>Roll <span class="say">(propeller)</span></dt>
+            <dd>Spinning the C around like an aeroplane propeller.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Table height / lateral / longitudinal</dt>
+            <dd>The patient table moving <strong>up-down</strong> (height), <strong>side-to-side</strong> (lateral), and <strong>head-to-feet</strong> (longitudinal).</dd>
+          </div>
+          <div class="gloss">
+            <dt>Tilt / cradle</dt>
+            <dd>Tipping the whole table — head-end down (tilt) or rocking side to side (cradle).</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="gloss-group">
+        <h3 class="gloss-head">Buttons on the screen</h3>
+        <dl class="gloss-list">
+          <div class="gloss">
+            <dt>Home</dt>
+            <dd>Sends every part back to its normal starting position — the "tidy up and go to neutral" pose.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Jog</dt>
+            <dd>To nudge a part by hand, a little at a time, using buttons — instead of typing an exact number to go to.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Force collision</dt>
+            <dd>A button that <em>deliberately</em> drives the arm and table toward each other until they'd bump — so you can watch the safety system catch it and stop everything. (Totally safe — it's all pretend.)</dd>
+          </div>
+          <div class="gloss">
+            <dt>Emergency stop <span class="say">(E-STOP)</span></dt>
+            <dd>The big red "freeze everything NOW" button. Nothing moves again until you press Reset.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Reset</dt>
+            <dd>Clears any warnings and puts the machine back to a clean starting state.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Flakiness <span class="say">(Off / Mild / Harsh)</span></dt>
+            <dd>A switch that makes the pretend machine behave more or less <strong>wobbly and unreliable</strong> on purpose — so you can practise writing tests that cope with it.</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="gloss-group">
+        <h3 class="gloss-head">Words from testing</h3>
+        <dl class="gloss-list">
+          <div class="gloss">
+            <dt>Settle / settled</dt>
+            <dd>When a moving part has fully stopped <em>and</em> stopped wobbling, it has "settled." Good tests wait for this before they check anything.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Tolerance</dt>
+            <dd>How much "close enough" you allow. "Within 0.05" means "if it lands within a tiny margin of the target, that counts as correct" — because real motors never stop on the exact number.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Fault</dt>
+            <dd>The machine's way of saying "something's wrong" — like being asked to move too far, or a crash risk. It refuses and shows a fault instead of hurting itself.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Scenario</dt>
+            <dd>One little test story: <em>do this → wait → then check that</em>. The project has lots of them.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Gherkin</dt>
+            <dd>The almost-plain-English language the test stories are written in, using the words <strong>When</strong>, <strong>And</strong>, and <strong>Then</strong>.</dd>
+          </div>
+          <div class="gloss">
+            <dt>Simulator</dt>
+            <dd>The pretend machine itself: software that copies how the real one behaves, so you can practise safely.</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="mono">AZURION SIMULATOR</span>
+    <span>·</span>
+    <span>A safe place to learn how to test machines that move.</span>
+    <span>·</span>
+    <span class="mono">command → wait → check</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var canvas = document.getElementById("carm");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Colours pulled from the page palette.
+  var ARM = "#7fb6c4", SOURCE = "#cfe6ea", DETECT = "#6fd49a",
+      BEAM = "rgba(111,208,221,0.16)", TABLE = "#48637a", PATIENT = "#9fb8c9",
+      GRID = "rgba(120,150,170,0.16)", LABEL = "#8fb0bc", ISO = "#e7b94b";
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = canvas.clientWidth || 520;
+    var cssH = Math.round(cssW * 0.85);
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w: cssW, h: cssH };
+  }
+
+  function draw(angleDeg, dim) {
+    var w = dim.w, h = dim.h;
+    ctx.clearRect(0, 0, w, h);
+
+    // faint blueprint grid
+    ctx.strokeStyle = GRID;
+    ctx.lineWidth = 1;
+    var step = 26;
+    for (var x = (w % step) / 2; x < w; x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (var y = (h % step) / 2; y < h; y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    var cx = w / 2, cy = h * 0.52;
+    var R = Math.min(w, h) * 0.32;
+
+    // ---- table (does not rotate) ----
+    ctx.save();
+    ctx.fillStyle = TABLE;
+    roundRect(ctx, cx - R * 1.55, cy + 4, R * 3.1, 9, 4); ctx.fill();
+    ctx.fillStyle = PATIENT;
+    roundRect(ctx, cx - R * 0.95, cy - 5, R * 1.7, 9, 4); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + R * 0.85, cy - 1, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#34495d";
+    ctx.fillRect(cx - 9, cy + 13, 18, h * 0.30); // pedestal
+    ctx.restore();
+
+    // ---- C-arm (rotates) ----
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angleDeg * Math.PI / 180);
+
+    // the C (left semicircle connecting source and detector)
+    ctx.strokeStyle = ARM;
+    ctx.lineWidth = 11;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(0, 0, R, -Math.PI / 2, Math.PI / 2, true);
+    ctx.stroke();
+
+    // beam
+    ctx.fillStyle = BEAM;
+    ctx.beginPath();
+    ctx.moveTo(0, -R + 9);
+    ctx.lineTo(-15, R - 6);
+    ctx.lineTo(15, R - 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // X-ray source (top)
+    ctx.fillStyle = SOURCE;
+    ctx.beginPath(); ctx.arc(0, -R, 12, 0, Math.PI * 2); ctx.fill();
+
+    // detector panel (bottom)
+    ctx.fillStyle = "rgba(111,212,154,0.18)";
+    ctx.strokeStyle = DETECT;
+    ctx.lineWidth = 2;
+    roundRect(ctx, -22, R - 6, 44, 12, 3); ctx.fill(); ctx.stroke();
+
+    ctx.restore();
+
+    // isocenter crosshair (fixed)
+    ctx.strokeStyle = ISO;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy); ctx.lineTo(cx + 7, cy);
+    ctx.moveTo(cx, cy - 7); ctx.lineTo(cx, cy + 7);
+    ctx.stroke();
+
+    // readout label (mono)
+    var side = angleDeg >= 0 ? "LAO" : "RAO";
+    ctx.fillStyle = LABEL;
+    ctx.font = "13px ui-monospace, Consolas, monospace";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(side + " " + Math.abs(angleDeg).toFixed(0) + "°  rotation", 18, h - 18);
+    ctx.fillStyle = "#5f7886";
+    ctx.fillText("isocenter", cx + 12, cy - 10);
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  var dim = resize();
+  window.addEventListener("resize", function () { dim = resize(); if (reduce) draw(28, dim); });
+
+  if (reduce) {
+    draw(28, dim); // a pleasant static pose
+  } else {
+    var start = null;
+    function frame(ts) {
+      if (start === null) start = ts;
+      var t = (ts - start) / 1000;
+      var angle = Math.sin(t * 0.5) * 34; // gentle sweep, ±34°
+      draw(angle, dim);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+
+</body>
+</html>

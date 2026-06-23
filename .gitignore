@@ -1,0 +1,18 @@
+## .NET build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+
+## Reqnroll generated code-behind
+*.feature.cs
+
+## IDE
+.vs/
+.idea/
+*.suo
+
+## OS
+Thumbs.db
+.DS_Store
