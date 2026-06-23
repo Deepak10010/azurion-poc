@@ -1,7 +1,6 @@
 # Azurion — Hardware Test Simulator & Automation Trainer
 
-A learning project for **hardware test automation in healthcare**, modelled on the Philips
-**Azurion** interventional X-ray system. It pairs a software **simulator of a motorised C-arm and
+A learning project for **hardware test automation in healthcare**, modelled on the interventional X-ray system. It pairs a software **simulator of a motorised C-arm and
 patient table** (the "system under test") with a **Reqnroll (C#/.NET) Gherkin** test framework that
 drives it — and a **live web dashboard** so you can *watch* the hardware move while your tests run.
 
